@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PWA Kamasutra Viewer (offline)</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; background: #0b1220; color: #fff; }
+    h1 { margin-top: 0; }
+    button, input { margin: 5px; padding: 10px; border-radius: 6px; border: none; }
+    button { background: #7c3aed; color: #fff; cursor: pointer; }
+    #viewer { display: none; margin-top: 20px; padding: 15px; background: #1a1f36; border-radius: 8px; }
+    #viewer img { max-width: 100%; height: auto; border-radius: 6px; margin-bottom: 10px; }
+    #status { margin-top: 10px; font-size: 14px; color: #9aa4b2; }
+  </style>
+</head>
+<body>
+  <h1>PWA Kamasutra Viewer (offline)</h1>
+  <p><b>Procédure initiale</b> : 1) Charger descriptions JSON → 2) Importer images<br>
+     Ensuite tout est sauvegardé automatiquement, plus besoin de répéter.</p>
+
+  <div>
+    <button id="btnLoadJson">Charger descriptions JSON</button>
+    <input id="imgFiles" type="file" multiple accept="image/*">
+    <button id="btnShowRandom">Afficher une position aléatoire</button>
+    <button id="btnClear">Effacer stockage</button>
+  </div>
+
+  <div id="status">En attente…</div>
+
+  <div id="viewer">
+    <img id="viewerImage" src="" alt="">
+    <h2 id="viewerTitle"></h2>
+    <p id="viewerDesc"></p>
+  </div>
+
+<script>
+const state = { descriptions: {}, images: [] };
+
+// --- Charger depuis IndexedDB au démarrage
+(async function init() {
+  const savedDesc = await localforage.getItem("descriptions");
+  const savedImgs = await localforage.getItem("images");
+  if (savedDesc) {
+    state.descriptions = savedDesc;
+    setStatus("Descriptions restaurées ("+Object.keys(savedDesc).length+")");
+  }
+  if (savedImgs) {
+    state.images = savedImgs;
+    setStatus(state.images.length+" images restaurées");
+  }
+})();
+
+// --- Charger JSON
+document.getElementById('btnLoadJson').addEventListener('click', async () => {
+  try {
+    const res = await fetch('descriptions.json?v='+Date.now(), {cache:'no-store'});
+    const json = await res.json();
+    const map = {};
+    json.images.forEach(item => map[item.filename.toLowerCase()] = item.description);
+    state.descriptions = map;
+    await localforage.setItem("descriptions", map);
+    setStatus("Descriptions chargées et sauvegardées ("+Object.keys(map).length+")");
+  } catch (e) {
+    setStatus("Erreur JSON : " + e.message);
+  }
+});
+
+// --- Importer images
+document.getElementById('imgFiles').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  state.images = [];
+  for (const f of files) {
+    const data = await toBase64(f);
+    state.images.push({ fileName: f.name.toLowerCase(), dataURL: data });
+  }
+  await localforage.setItem("images", state.images);
+  setStatus(state.images.length+" images importées et sauvegardées");
+});
+
+// --- Afficher aléatoire
+document.getElementById('btnShowRandom').addEventListener('click', () => {
+  if (!state.images.length) return setStatus("Aucune image disponible.");
+  const idx = Math.floor(Math.random()*state.images.length);
+  const img = state.images[idx];
+  const desc = state.descriptions[img.fileName] || "Pas de description trouvée";
+  showViewer(img.fileName, img.dataURL, desc);
+});
+
+// --- Effacer tout
+document.getElementById('btnClear').addEventListener('click', async () => {
+  await localforage.removeItem("descriptions");
+  await localforage.removeItem("images");
+  state.descriptions = {}; state.images = [];
+  setStatus("Stockage effacé. Rechargez JSON + images.");
+});
+
+// --- Helpers
+function showViewer(title, src, desc) {
+  document.getElementById('viewerImage').src = src;
+  document.getElementById('viewerTitle').textContent = title;
+  document.getElementById('viewerDesc').textContent = desc;
+  document.getElementById('viewer').style.display = 'block';
+}
+function setStatus(msg){ document.getElementById('status').textContent = msg; console.log(msg); }
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+// --- PWA service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log("SW ok"));
+}
+</script>
+</body>
+</html>
