@@ -68,7 +68,6 @@
 
     .btn:active { transform: scale(0.95); }
 
-    .primary { background: #ff7eb3; color: #fff; }
     .secondary { background: #7c3aed; color: #fff; }
 
     #status {
@@ -80,10 +79,9 @@
 <body>
   <h1>🔥 Kamasutra Viewer</h1>
 
-  <div id="status">Clique sur "Charger" pour commencer</div>
+  <div id="status">Chargement en cours...</div>
 
   <div>
-    <button class="btn primary" id="btnLoadAll">📥 Charger</button>
     <button class="btn secondary" id="btnShowRandom">🎲 Position aléatoire</button>
   </div>
 
@@ -135,12 +133,16 @@ function showViewer(title, src, desc){
 
 function setStatus(msg){ document.getElementById('status').textContent = msg; console.log(msg); }
 
-document.getElementById('btnLoadAll').addEventListener('click', loadAll);
 document.getElementById('btnShowRandom').addEventListener('click', showRandom);
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js');
 }
+
+// 🚀 Charger automatiquement au lancement
+window.addEventListener("load", () => {
+  loadAll();
+});
 </script>
 </body>
 </html>
