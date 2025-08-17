@@ -1,10 +1,10 @@
-const CACHE = "kama-pwa-v1";
+const CACHE = "Kama-pwa-v1";
 const FILES = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/sw.js",
-  "/descriptions.json",
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./sw.js",
+  "./descriptions.json",
   "https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"
 ];
 
