@@ -3,26 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PWA Kamasutra Viewer (GitHub Pages)</title>
+  <title>Kamasutra Viewer</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; background: #0b1220; color: #fff; }
-    button { margin: 5px; padding: 10px; border-radius: 6px; border: none; background: #7c3aed; color: #fff; cursor: pointer; }
-    #viewer { display: none; margin-top: 20px; padding: 15px; background: #1a1f36; border-radius: 8px; }
-    #viewer img { max-width: 100%; border-radius: 6px; margin-bottom: 10px; }
-    #status { margin-top: 10px; font-size: 14px; color: #9aa4b2; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #ff758c, #ff7eb3, #7c3aed);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 20px 0;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    #viewer {
+      display: none;
+      background: #fff;
+      color: #333;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+
+    #viewer img {
+      width: 100%;
+      border-radius: 16px;
+      margin-bottom: 15px;
+    }
+
+    #viewer h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #7c3aed;
+    }
+
+    #viewer p {
+      font-size: 16px;
+      line-height: 1.4em;
+    }
+
+    .btn {
+      margin: 10px;
+      padding: 14px 22px;
+      border-radius: 50px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .btn:active { transform: scale(0.95); }
+
+    .primary { background: #ff7eb3; color: #fff; }
+    .secondary { background: #7c3aed; color: #fff; }
+
+    #status {
+      font-size: 14px;
+      opacity: 0.9;
+    }
   </style>
 </head>
 <body>
-  <h1>PWA Kamasutra Viewer</h1>
-  <p><b>Fonctionnement :</b> les descriptions et les images sont chargées directement depuis le site et mises en cache offline automatiquement.</p>
+  <h1>🔥 Kamasutra Viewer</h1>
+
+  <div id="status">Clique sur "Charger" pour commencer</div>
 
   <div>
-    <button id="btnLoadAll">Charger tout</button>
-    <button id="btnShowRandom">Afficher une position aléatoire</button>
+    <button class="btn primary" id="btnLoadAll">📥 Charger</button>
+    <button class="btn secondary" id="btnShowRandom">🎲 Position aléatoire</button>
   </div>
-
-  <div id="status">En attente…</div>
 
   <div id="viewer">
     <img id="viewerImage" src="" alt="">
@@ -43,20 +106,19 @@ async function loadAll(){
     });
     state.descriptions = map;
 
-    // Charger images directement depuis le dossier "images/"
     state.images = json.images.map(item => ({
       fileName: item.filename.toLowerCase(),
       url: "./images/" + item.filename
     }));
 
-    setStatus("Descriptions et images chargées ("+state.images.length+")");
+    setStatus("✅ "+state.images.length+" positions prêtes !");
   } catch(e) {
     setStatus("Erreur : " + e.message);
   }
 }
 
 function showRandom(){
-  if(!state.images.length) return setStatus("Aucune image disponible.");
+  if(!state.images.length) return setStatus("❌ Pas d'images chargées");
   const idx = Math.floor(Math.random()*state.images.length);
   const img = state.images[idx];
   const desc = state.descriptions[img.fileName] || "Pas de description trouvée";
@@ -68,7 +130,7 @@ function showViewer(title, src, desc){
   document.getElementById('viewerTitle').textContent = title;
   document.getElementById('viewerDesc').textContent = desc;
   document.getElementById('viewer').style.display = 'block';
-  setStatus("Affichage de : " + title);
+  setStatus("Affichage : "+title);
 }
 
 function setStatus(msg){ document.getElementById('status').textContent = msg; console.log(msg); }
@@ -77,7 +139,7 @@ document.getElementById('btnLoadAll').addEventListener('click', loadAll);
 document.getElementById('btnShowRandom').addEventListener('click', showRandom);
 
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>console.log("SW ok"));
+  navigator.serviceWorker.register('sw.js');
 }
 </script>
 </body>
